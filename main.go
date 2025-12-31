@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 	"syscall"
+	"time"
 
 	"golang.org/x/term"
 )
@@ -38,20 +40,51 @@ func main() {
 	}
 }
 
+// executeCommand ejecuta un comando del sistema
+func executeCommand(cmdString string) error {
+	parts := strings.Fields(cmdString)
+	if len(parts) == 0 {
+		return fmt.Errorf("comando vacío")
+	}
+
+	cmd := exec.Command(parts[0], parts[1:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 func printUsage() {
 	fmt.Println("GoNauta - Cliente CLI para Nauta")
-	fmt.Println("\nUso: gonauta <comando>")
-	fmt.Println("Comandos disponibles:")
-	fmt.Println("  login     - Guardar credenciales (usuario y contraseña)")
-	fmt.Println("  connect   - Iniciar sesión en Nauta")
-	fmt.Println("  logout    - Cerrar sesión activa")
-	fmt.Println("  status    - Ver tiempo restante de la sesión activa")
-	fmt.Println("  info      - Ver información completa del usuario")
-	fmt.Println("  help      - Mostrar esta ayuda")
+	fmt.Println("\nUso: gonauta <comando> [opciones]")
+	fmt.Println("\nComandos disponibles:")
+	fmt.Println("  login [--vpn] - Guardar credenciales (usuario y contraseña)")
+	fmt.Println("                  --vpn: Configurar comandos de VPN")
+	fmt.Println("  connect       - Iniciar sesión en Nauta (ejecuta VPN automáticamente si está configurado)")
+	fmt.Println("  logout        - Cerrar sesión activa (desconecta VPN automáticamente si está configurado)")
+	fmt.Println("  status        - Ver tiempo restante de la sesión activa")
+	fmt.Println("  info          - Ver información completa del usuario")
+	fmt.Println("  help          - Mostrar esta ayuda")
+	fmt.Println("\nConfiguración de VPN:")
+	fmt.Println("  Los comandos VPN se ejecutan automáticamente:")
+	fmt.Println("  - Conexión VPN: Después de conectar a Nauta")
+	fmt.Println("  - Desconexión VPN: Antes de cerrar sesión (con delay de 2 segundos)")
+	fmt.Println("\nEjemplos de comandos VPN (NordVPN):")
+	fmt.Println("  Windows:")
+	fmt.Println("    Conexión:    C:\\Program Files\\NordVPN\\nordvpn.exe -c")
+	fmt.Println("    Desconexión: C:\\Program Files\\NordVPN\\nordvpn.exe -d")
+	fmt.Println("  Linux/macOS:")
+	fmt.Println("    Conexión:    nordvpn connect")
+	fmt.Println("    Desconexión: nordvpn disconnect")
 }
 
 func handleLogin() {
 	reader := bufio.NewReader(os.Stdin)
+
+	// Verificar si se pasó el flag --vpn
+	configureVPN := false
+	if len(os.Args) > 2 && os.Args[2] == "--vpn" {
+		configureVPN = true
+	}
 
 	fmt.Print("Usuario (ej: usuario@nauta.com.cu): ")
 	username, _ := reader.ReadString('\n')
@@ -76,16 +109,42 @@ func handleLogin() {
 		os.Exit(1)
 	}
 
-	if err := SaveCredentials(username, password); err != nil {
+	var vpnConnectCmd, vpnDisconnectCmd string
+
+	if configureVPN {
+		fmt.Println("\n--- Configuración de VPN ---")
+		fmt.Print("Comando de conexión VPN: ")
+		vpnConnectCmd, _ = reader.ReadString('\n')
+		vpnConnectCmd = strings.TrimSpace(vpnConnectCmd)
+
+		fmt.Print("Comando de desconexión VPN: ")
+		vpnDisconnectCmd, _ = reader.ReadString('\n')
+		vpnDisconnectCmd = strings.TrimSpace(vpnDisconnectCmd)
+	}
+
+	if err := SaveCredentials(username, password, vpnConnectCmd, vpnDisconnectCmd); err != nil {
 		fmt.Printf("Error guardando credenciales: %v\n", err)
 		os.Exit(1)
 	}
 
 	fmt.Println("✓ Credenciales guardadas exitosamente")
+	if configureVPN && (vpnConnectCmd != "" || vpnDisconnectCmd != "") {
+		fmt.Println("✓ Configuración de VPN guardada")
+	}
 	fmt.Println("  Use 'gonauta connect' para iniciar sesión")
 }
 
 func handleConnect() {
+	// Verificar si ya existe una sesión activa
+	existingSession, err := LoadSession()
+	if err == nil && existingSession != nil {
+		fmt.Println("⚠️  Ya existe una sesión activa")
+		fmt.Printf("  Usuario: %s\n", existingSession.Username)
+		fmt.Println("\nUse 'gonauta status' para ver el tiempo restante")
+		fmt.Println("Use 'gonauta logout' para cerrar la sesión actual antes de conectar nuevamente")
+		os.Exit(0)
+	}
+
 	config, err := LoadCredentials()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -112,6 +171,17 @@ func handleConnect() {
 
 	fmt.Println("✓ Sesión iniciada exitosamente")
 	fmt.Printf("  Usuario: %s\n", session.Username)
+
+	// Ejecutar comando de conexión VPN si está configurado
+	if config.VPNConnectCmd != "" {
+		fmt.Println("\nConectando VPN...")
+		if err := executeCommand(config.VPNConnectCmd); err != nil {
+			fmt.Printf("⚠️  Error ejecutando comando VPN: %v\n", err)
+		} else {
+			fmt.Println("✓ VPN conectado")
+		}
+	}
+
 	fmt.Println("\nUse 'gonauta status' para ver el tiempo restante")
 	fmt.Println("Use 'gonauta logout' para cerrar la sesión")
 }
@@ -121,6 +191,46 @@ func handleLogout() {
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
+	}
+
+	// Cargar configuración para obtener comandos VPN
+	config, err := LoadCredentials()
+	if err != nil {
+		fmt.Printf("Error cargando configuración: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Verificar si está conectado a través de VPN
+	fmt.Println("Verificando conexión...")
+	ipInfo, err := checkConnection()
+	if err != nil {
+		fmt.Printf("Error verificando conexión: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Si está conectado desde fuera de Cuba (VPN detectado)
+	if ipInfo.CountryCode != "CU" {
+		// Verificar si hay comando de desconexión VPN configurado
+		if config.VPNDisconnectCmd != "" {
+			// Ejecutar desconexión automática
+			fmt.Printf("\n⚠️  Conectado a través de VPN (País: %s, ISP: %s)\n", ipInfo.Country, ipInfo.ISP)
+			fmt.Println("Desconectando VPN...")
+			time.Sleep(2 * time.Second) // Delay de 2 segundos
+			if err := executeCommand(config.VPNDisconnectCmd); err != nil {
+				fmt.Printf("⚠️  Error ejecutando comando VPN: %v\n", err)
+			} else {
+				fmt.Println("✓ VPN desconectado")
+			}
+		} else {
+			// No hay comando de desconexión configurado
+			fmt.Printf("\n⚠️  Conectado a través de VPN\n")
+			fmt.Printf("País: %s\n", ipInfo.Country)
+			fmt.Printf("ISP: %s\n\n", ipInfo.ISP)
+			fmt.Println("Para desconexión automática de VPN, configure un comando de desconexión usando:")
+			fmt.Println("  gonauta login --vpn")
+			fmt.Println("\nNo se puede cerrar sesión mientras esté conectado a través de VPN sin comando de desconexión configurado.")
+			os.Exit(1)
+		}
 	}
 
 	client, err := NewClient()
@@ -164,7 +274,10 @@ func handleStatus() {
 	remainingTime, err := session.GetRemainingTime()
 	if err != nil {
 		fmt.Printf("Error obteniendo tiempo restante: %v\n", err)
-		fmt.Println("\nLa sesión puede haber expirado. Use 'gonauta connect' para iniciar sesión nuevamente")
+		// Solo mostrar mensaje de sesión expirada si no es un error de VPN
+		if !strings.Contains(err.Error(), "VPN") {
+			fmt.Println("\nLa sesión puede haber expirado. Use 'gonauta connect' para iniciar sesión nuevamente")
+		}
 		os.Exit(1)
 	}
 

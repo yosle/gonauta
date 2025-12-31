@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -19,6 +21,7 @@ const (
 	HourRate          = 12.5
 	NationalHourRate  = 2.5
 	MaxTimeoutSeconds = 30
+	IPCheckURL        = "http://ip-api.com/json/"
 )
 
 // Time representa el tiempo restante
@@ -43,6 +46,24 @@ type SessionData struct {
 	UUID     string `json:"uuid"`
 }
 
+// IPInfo contiene la información de geolocalización IP
+type IPInfo struct {
+	Status      string  `json:"status"`
+	Country     string  `json:"country"`
+	CountryCode string  `json:"countryCode"`
+	Region      string  `json:"region"`
+	RegionName  string  `json:"regionName"`
+	City        string  `json:"city"`
+	Zip         string  `json:"zip"`
+	Lat         float64 `json:"lat"`
+	Lon         float64 `json:"lon"`
+	Timezone    string  `json:"timezone"`
+	ISP         string  `json:"isp"`
+	Org         string  `json:"org"`
+	AS          string  `json:"as"`
+	Query       string  `json:"query"`
+}
+
 // Client maneja las operaciones de Nauta
 type Client struct {
 	httpClient *http.Client
@@ -63,6 +84,31 @@ func NewClient() (*Client, error) {
 		},
 		cookieJar: jar,
 	}, nil
+}
+
+// checkConnection verifica la conectividad y detecta el uso de VPN
+func checkConnection() (*IPInfo, error) {
+	resp, err := http.Get(IPCheckURL)
+	if err != nil {
+		return nil, fmt.Errorf("no hay conexión a internet: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error leyendo respuesta: %w", err)
+	}
+
+	var ipInfo IPInfo
+	if err := json.Unmarshal(body, &ipInfo); err != nil {
+		return nil, fmt.Errorf("error parseando respuesta: %w", err)
+	}
+
+	if ipInfo.Status != "success" {
+		return nil, errors.New("no se pudo verificar la ubicación")
+	}
+
+	return &ipInfo, nil
 }
 
 // getLoginParams extrae los parámetros ocultos del formulario de login
@@ -94,6 +140,19 @@ func extractUUID(body string) (string, error) {
 
 // Login inicia sesión en Nauta
 func (c *Client) Login(username, password string) (*SessionData, error) {
+	// Verificar conectividad
+	ipInfo, err := checkConnection()
+	if err != nil {
+		return nil, err
+	}
+
+	// Verificar si está conectado desde Cuba (posible VPN)
+	if ipInfo.CountryCode != "CU" {
+		fmt.Printf("\n⚠️  Conectado a través de VPN\n")
+		fmt.Printf("País: %s\n", ipInfo.Country)
+		fmt.Printf("ISP: %s\n\n", ipInfo.ISP)
+	}
+
 	// Obtener la página inicial
 	resp, err := c.httpClient.Get(BaseURL)
 	if err != nil {
@@ -319,6 +378,17 @@ func (s *Session) GetRemainingTime() (*Time, error) {
 		return nil, fmt.Errorf("sesión inválida: %+v", s.Data)
 	}
 
+	// Verificar conectividad
+	ipInfo, err := checkConnection()
+	if err != nil {
+		return nil, err
+	}
+
+	// Bloquear si está conectado desde fuera de Cuba (VPN)
+	if ipInfo.CountryCode != "CU" {
+		return nil, fmt.Errorf("No se puede obtener el estado de la sesión cuando está conectado a través de VPN (País: %s, ISP: %s)", ipInfo.Country, ipInfo.ISP)
+	}
+
 	formData := url.Values{}
 	formData.Set("op", "getLeftTime")
 	formData.Set("ATTRIBUTE_UUID", s.Data.UUID)
@@ -346,6 +416,19 @@ func (s *Session) GetRemainingTime() (*Time, error) {
 
 // Logout cierra la sesión
 func (s *Session) Logout() error {
+	// Verificar conectividad
+	ipInfo, err := checkConnection()
+	if err != nil {
+		return err
+	}
+
+	// Verificar si está conectado desde Cuba (posible VPN)
+	if ipInfo.CountryCode != "CU" {
+		fmt.Printf("\n⚠️  Conectado a través de VPN\n")
+		fmt.Printf("País: %s\n", ipInfo.Country)
+		fmt.Printf("ISP: %s\n\n", ipInfo.ISP)
+	}
+
 	formData := url.Values{}
 	formData.Set("ATTRIBUTE_UUID", s.Data.UUID)
 	formData.Set("username", s.Data.Username)

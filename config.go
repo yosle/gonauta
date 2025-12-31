@@ -13,8 +13,10 @@ import (
 )
 
 type Config struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username         string `json:"username"`
+	Password         string `json:"password"`
+	VPNConnectCmd    string `json:"vpn_connect_cmd,omitempty"`
+	VPNDisconnectCmd string `json:"vpn_disconnect_cmd,omitempty"`
 }
 
 func getConfigPath() (string, error) {
@@ -74,10 +76,12 @@ func decrypt(data []byte, key []byte) ([]byte, error) {
 	return gcm.Open(nil, nonce, ciphertext, nil)
 }
 
-func SaveCredentials(username, password string) error {
+func SaveCredentials(username, password, vpnConnectCmd, vpnDisconnectCmd string) error {
 	config := Config{
-		Username: username,
-		Password: password,
+		Username:         username,
+		Password:         password,
+		VPNConnectCmd:    vpnConnectCmd,
+		VPNDisconnectCmd: vpnDisconnectCmd,
 	}
 
 	data, err := json.Marshal(config)

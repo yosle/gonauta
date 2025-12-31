@@ -1,4 +1,4 @@
-module go_nauta
+module gonauta
 
 go 1.25.5
 
