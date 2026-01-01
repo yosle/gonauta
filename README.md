@@ -34,15 +34,27 @@ sudo mv gonauta /usr/local/bin/
 ```
 
 **Linux:**
+
+*Opción 1: Paquetes (recomendado)*
 ```bash
-# Binario
+# Debian/Ubuntu (.deb)
+wget https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-amd64.deb
+sudo dpkg -i gonauta-1.0.0-amd64.deb
+
+# Fedora/RHEL/CentOS (.rpm)
+wget https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-x86_64.rpm
+sudo rpm -i gonauta-1.0.0-x86_64.rpm
+
+# Alpine (.apk)
+wget https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-x86_64.apk
+sudo apk add --allow-untrusted gonauta-1.0.0-x86_64.apk
+```
+
+*Opción 2: Binario directo*
+```bash
 curl -L -o gonauta https://github.com/yosle/gonauta/releases/latest/download/gonauta-linux-amd64
 chmod +x gonauta
 sudo mv gonauta /usr/local/bin/
-
-# O instalar paquete .deb (Debian/Ubuntu)
-wget https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-amd64.deb
-sudo dpkg -i gonauta-1.0.0-amd64.deb
 ```
 
 ### Desde código fuente

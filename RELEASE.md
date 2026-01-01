@@ -20,6 +20,90 @@ Este proyecto sigue [Semantic Versioning](https://semver.org/):
 - **MINOR** (v0.1.0): Nueva funcionalidad compatible con versiones anteriores
 - **PATCH** (v0.0.1): Corrección de bugs compatible con versiones anteriores
 
+## Plataformas soportadas
+
+El workflow genera binarios e instaladores para:
+
+### Windows
+- `gonauta-X.X.X-windows-amd64.zip` - Windows 64-bit (Intel/AMD)
+- Archivos individuales también disponibles
+
+### macOS
+- `gonauta-X.X.X-darwin-amd64.tar.gz` - macOS Intel
+- `gonauta-X.X.X-darwin-arm64.tar.gz` - macOS Apple Silicon (M1/M2/M3)
+- Homebrew (opcional): `brew install yosle/tap/gonauta`
+
+### Linux
+
+**Paquetes:**
+- `gonauta-X.X.X-amd64.deb` - Debian/Ubuntu
+- `gonauta-X.X.X-x86_64.rpm` - Fedora/RHEL/CentOS
+- `gonauta-X.X.X-x86_64.apk` - Alpine Linux
+
+**Archivos tar.gz:**
+- `gonauta-X.X.X-linux-amd64.tar.gz` - Linux 64-bit (Intel/AMD)
+- `gonauta-X.X.X-linux-arm64.tar.gz` - Linux ARM64
+
+## Instalación desde releases
+
+### Windows
+1. Descarga `gonauta-X.X.X-windows-amd64.zip` desde la página de releases
+2. Extrae el archivo ZIP
+3. Mueve `gonauta.exe` a una carpeta en tu PATH o ejecuta directamente
+
+### macOS
+```bash
+# Descargar el binario apropiado
+curl -L -o gonauta.tar.gz https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-darwin-arm64.tar.gz
+
+# Extraer
+tar -xzf gonauta.tar.gz
+
+# Dar permisos de ejecución
+chmod +x gonauta
+
+# Mover a PATH (opcional)
+sudo mv gonauta /usr/local/bin/
+```
+
+### Linux (binario)
+```bash
+# Descargar el binario
+curl -L -o gonauta.tar.gz https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-linux-amd64.tar.gz
+
+# Extraer
+tar -xzf gonauta.tar.gz
+
+# Dar permisos de ejecución
+chmod +x gonauta
+
+# Mover a PATH (opcional)
+sudo mv gonauta /usr/local/bin/
+```
+
+### Debian/Ubuntu (.deb)
+```bash
+wget https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-amd64.deb
+sudo dpkg -i gonauta-1.0.0-amd64.deb
+```
+
+### Fedora/RHEL/CentOS (.rpm)
+```bash
+wget https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-x86_64.rpm
+sudo rpm -i gonauta-1.0.0-x86_64.rpm
+```
+
+### Alpine Linux (.apk)
+```bash
+wget https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-x86_64.apk
+sudo apk add --allow-untrusted gonauta-1.0.0-x86_64.apk
+```
+
+### Homebrew (macOS)
+```bash
+brew install yosle/tap/gonauta
+```
+
 ## Trigger manual
 
 También puedes ejecutar el workflow manualmente desde la pestaña "Actions" en GitHub sin crear un tag. Esto generará los binarios pero no creará un release público.

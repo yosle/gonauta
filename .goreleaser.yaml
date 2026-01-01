@@ -8,7 +8,7 @@ before:
 
 builds:
   - id: gonauta
-    main: ./main.go
+    main: .
     binary: gonauta
     env:
       - CGO_ENABLED=0
@@ -19,46 +19,104 @@ builds:
     goarch:
       - amd64
       - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
     flags:
       - -trimpath
     ldflags:
-      - -s -w
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
     mod_timestamp: '{{ .CommitDate }}'
 
 archives:
   - id: default
     builds:
       - gonauta
+    format: tar.gz
     format_overrides:
       - goos: windows
         format: zip
-    name_template: '{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}'
+    name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}'
     files:
-      - LICENSE
-      - README.md
+      - LICENSE*
+      - README*
+      - RELEASE*
 
 nfpms:
-  - id: deb
+  - id: packages
     package_name: gonauta
-    file_name_template: '{{ .ProjectName }}-{{ .Version }}_{{ .Arch }}'
+    file_name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}'
+    builds:
+      - gonauta
     homepage: https://github.com/yosle/gonauta
-    description: Cliente CLI para gestionar conexiones a Nauta con soporte VPN automático.
+    description: |-
+      Cliente CLI para gestionar conexiones a Nauta (Cuba).
+      GoNauta es un cliente de línea de comandos para gestionar
+      conexiones a Nauta con soporte para VPN automático.
     maintainer: GoNauta Team <opensource@yosle.dev>
     license: MIT
     vendor: GoNauta
+    bindir: /usr/local/bin
+    section: net
+    priority: optional
     formats:
       - deb
-    bindir: /usr/local/bin
+      - rpm
+      - apk
+    dependencies:
+      - ca-certificates
+    recommends:
+      - git
+    contents:
+      - src: ./LICENSE
+        dst: /usr/share/doc/gonauta/LICENSE
+      - src: ./README.md
+        dst: /usr/share/doc/gonauta/README.md
+
+brews:
+  - name: gonauta
+    repository:
+      owner: yosle
+      name: homebrew-tap
+    homepage: https://github.com/yosle/gonauta
+    description: Cliente CLI para gestionar conexiones a Nauta (Cuba)
+    license: MIT
+    skip_upload: auto
+    install: |
+      bin.install "gonauta"
 
 checksum:
-  name_template: '{{ .ProjectName }}_checksums.txt'
+  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
+  algorithm: sha256
 
-signs:
-  - artifacts: checksum
+snapshot:
+  name_template: '{{ incpatch .Version }}-next'
 
 changelog:
   sort: asc
+  use: github
   filters:
     exclude:
       - '^docs:'
       - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: Others
+      order: 999
+
+release:
+  github:
+    owner: yosle
+    name: gonauta
+  draft: false
+  prerelease: auto
+  mode: append
+  name_template: "{{.ProjectName}} v{{.Version}}"
