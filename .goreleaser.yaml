@@ -14,7 +14,6 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
-      - darwin
       - windows
     goarch:
       - amd64
@@ -71,18 +70,6 @@ nfpms:
         dst: /usr/share/doc/gonauta/LICENSE
       - src: ./README.md
         dst: /usr/share/doc/gonauta/README.md
-
-brews:
-  - name: gonauta
-    repository:
-      owner: yosle
-      name: homebrew-tap
-    homepage: https://github.com/yosle/gonauta
-    description: Cliente CLI para gestionar conexiones a Nauta (Cuba)
-    license: MIT
-    skip_upload: auto
-    install: |
-      bin.install "gonauta"
 
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'

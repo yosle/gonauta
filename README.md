@@ -21,18 +21,6 @@ Descarga el binario precompilado para tu plataforma desde la [página de release
 # Ejecuta directamente o añade a tu PATH
 ```
 
-**macOS:**
-```bash
-# Intel
-curl -L -o gonauta https://github.com/yosle/gonauta/releases/latest/download/gonauta-macos-amd64
-
-# Apple Silicon (M1/M2/M3)
-curl -L -o gonauta https://github.com/yosle/gonauta/releases/latest/download/gonauta-macos-arm64
-
-chmod +x gonauta
-sudo mv gonauta /usr/local/bin/
-```
-
 **Linux:**
 
 *Opción 1: Paquetes (recomendado)*
@@ -65,7 +53,7 @@ cd gonauta
 go build
 ```
 
-Esto generará el ejecutable `gonauta.exe` (Windows) o `gonauta` (Linux/Mac).
+Esto generará el ejecutable `gonauta.exe` (Windows) o `gonauta` (Linux).
 
 ## Uso
 
@@ -103,7 +91,7 @@ C:\Program Files\NordVPN\nordvpn.exe -c
 C:\Program Files\NordVPN\nordvpn.exe -d
 ```
 
-**Linux/macOS:**
+**Linux:**
 ```bash
 # Conexión
 nordvpn connect

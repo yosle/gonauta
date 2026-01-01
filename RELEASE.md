@@ -26,19 +26,16 @@ El workflow genera binarios e instaladores para:
 
 ### Windows
 - `gonauta-X.X.X-windows-amd64.zip` - Windows 64-bit (Intel/AMD)
-- Archivos individuales también disponibles
-
-### macOS
-- `gonauta-X.X.X-darwin-amd64.tar.gz` - macOS Intel
-- `gonauta-X.X.X-darwin-arm64.tar.gz` - macOS Apple Silicon (M1/M2/M3)
-- Homebrew (opcional): `brew install yosle/tap/gonauta`
 
 ### Linux
 
 **Paquetes:**
-- `gonauta-X.X.X-amd64.deb` - Debian/Ubuntu
-- `gonauta-X.X.X-x86_64.rpm` - Fedora/RHEL/CentOS
-- `gonauta-X.X.X-x86_64.apk` - Alpine Linux
+- `gonauta-X.X.X-amd64.deb` - Debian/Ubuntu (amd64)
+- `gonauta-X.X.X-arm64.deb` - Debian/Ubuntu (ARM64)
+- `gonauta-X.X.X-x86_64.rpm` - Fedora/RHEL/CentOS (amd64)
+- `gonauta-X.X.X-arm64.rpm` - Fedora/RHEL/CentOS (ARM64)
+- `gonauta-X.X.X-amd64.apk` - Alpine Linux (amd64)
+- `gonauta-X.X.X-arm64.apk` - Alpine Linux (ARM64)
 
 **Archivos tar.gz:**
 - `gonauta-X.X.X-linux-amd64.tar.gz` - Linux 64-bit (Intel/AMD)
@@ -50,21 +47,6 @@ El workflow genera binarios e instaladores para:
 1. Descarga `gonauta-X.X.X-windows-amd64.zip` desde la página de releases
 2. Extrae el archivo ZIP
 3. Mueve `gonauta.exe` a una carpeta en tu PATH o ejecuta directamente
-
-### macOS
-```bash
-# Descargar el binario apropiado
-curl -L -o gonauta.tar.gz https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-darwin-arm64.tar.gz
-
-# Extraer
-tar -xzf gonauta.tar.gz
-
-# Dar permisos de ejecución
-chmod +x gonauta
-
-# Mover a PATH (opcional)
-sudo mv gonauta /usr/local/bin/
-```
 
 ### Linux (binario)
 ```bash
@@ -97,11 +79,6 @@ sudo rpm -i gonauta-1.0.0-x86_64.rpm
 ```bash
 wget https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-x86_64.apk
 sudo apk add --allow-untrusted gonauta-1.0.0-x86_64.apk
-```
-
-### Homebrew (macOS)
-```bash
-brew install yosle/tap/gonauta
 ```
 
 ## Trigger manual
