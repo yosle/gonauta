@@ -10,171 +10,37 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build and Release
+  goreleaser:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          # Windows
-          - goos: windows
-            goarch: amd64
-            output: gonauta.exe
-            asset_name: gonauta-windows-amd64.exe
-          - goos: windows
-            goarch: arm64
-            output: gonauta.exe
-            asset_name: gonauta-windows-arm64.exe
-          
-          # macOS
-          - goos: darwin
-            goarch: amd64
-            output: gonauta
-            asset_name: gonauta-macos-amd64
-          - goos: darwin
-            goarch: arm64
-            output: gonauta
-            asset_name: gonauta-macos-arm64
-          
-          # Linux
-          - goos: linux
-            goarch: amd64
-            output: gonauta
-            asset_name: gonauta-linux-amd64
-          - goos: linux
-            goarch: arm64
-            output: gonauta
-            asset_name: gonauta-linux-arm64
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
 
-      - name: Get dependencies
-        run: go mod download
-
-      - name: Build binary
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 0
-        run: |
-          go build -ldflags="-s -w" -o ${{ matrix.output }}
-
-      - name: Rename binary
-        run: mv ${{ matrix.output }} ${{ matrix.asset_name }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Cache Go modules
+        uses: actions/cache@v4
         with:
-          name: ${{ matrix.asset_name }}
-          path: ${{ matrix.asset_name }}
-
-  build-deb:
-    name: Build Debian Package
-    runs-on: ubuntu-latest
-    needs: build
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21'
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
       - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y dpkg-dev
-
-      - name: Get dependencies
         run: go mod download
 
-      - name: Build binary for amd64
-        env:
-          GOOS: linux
-          GOARCH: amd64
-          CGO_ENABLED: 0
-        run: |
-          go build -ldflags="-s -w" -o gonauta
-
-      - name: Create .deb package structure
-        run: |
-          mkdir -p gonauta-deb/DEBIAN
-          mkdir -p gonauta-deb/usr/local/bin
-          cp gonauta gonauta-deb/usr/local/bin/
-          chmod +x gonauta-deb/usr/local/bin/gonauta
-
-      - name: Get version from tag
-        id: get_version
-        run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-          else
-            VERSION="0.0.0"
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Create control file
-        run: |
-          cat > gonauta-deb/DEBIAN/control << EOF
-          Package: gonauta
-          Version: ${{ steps.get_version.outputs.version }}
-          Section: net
-          Priority: optional
-          Architecture: amd64
-          Maintainer: GoNauta Team
-          Description: Cliente CLI para gestionar conexiones a Nauta (Cuba)
-           GoNauta es un cliente de línea de comandos para gestionar
-           conexiones a Nauta con soporte para VPN automático.
-          EOF
-
-      - name: Build .deb package
-        run: |
-          dpkg-deb --build gonauta-deb
-          mv gonauta-deb.deb gonauta-${{ steps.get_version.outputs.version }}-amd64.deb
-
-      - name: Upload .deb artifact
-        uses: actions/upload-artifact@v4
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
         with:
-          name: gonauta-deb
-          path: gonauta-*.deb
-
-  release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    needs: [build, build-deb]
-    if: github.ref_type == 'tag'
-    
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Display structure of downloaded files
-        run: ls -R artifacts
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            artifacts/gonauta-windows-amd64.exe/gonauta-windows-amd64.exe
-            artifacts/gonauta-windows-arm64.exe/gonauta-windows-arm64.exe
-            artifacts/gonauta-macos-amd64/gonauta-macos-amd64
-            artifacts/gonauta-macos-arm64/gonauta-macos-arm64
-            artifacts/gonauta-linux-amd64/gonauta-linux-amd64
-            artifacts/gonauta-linux-arm64/gonauta-linux-arm64
-            artifacts/gonauta-deb/*.deb
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+          distribution: goreleaser
+          version: latest
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -13,7 +13,7 @@ Cliente CLI en Go para gestionar conexiones a Nauta (Cuba).
 
 ### Desde releases (recomendado)
 
-Descarga el binario precompilado para tu plataforma desde la [página de releases](https://github.com/USUARIO/gonauta/releases/latest):
+Descarga el binario precompilado para tu plataforma desde la [página de releases](https://github.com/yosle/gonauta/releases/latest):
 
 **Windows:**
 ```powershell
@@ -24,10 +24,10 @@ Descarga el binario precompilado para tu plataforma desde la [página de release
 **macOS:**
 ```bash
 # Intel
-curl -L -o gonauta https://github.com/USUARIO/gonauta/releases/latest/download/gonauta-macos-amd64
+curl -L -o gonauta https://github.com/yosle/gonauta/releases/latest/download/gonauta-macos-amd64
 
 # Apple Silicon (M1/M2/M3)
-curl -L -o gonauta https://github.com/USUARIO/gonauta/releases/latest/download/gonauta-macos-arm64
+curl -L -o gonauta https://github.com/yosle/gonauta/releases/latest/download/gonauta-macos-arm64
 
 chmod +x gonauta
 sudo mv gonauta /usr/local/bin/
@@ -36,19 +36,19 @@ sudo mv gonauta /usr/local/bin/
 **Linux:**
 ```bash
 # Binario
-curl -L -o gonauta https://github.com/USUARIO/gonauta/releases/latest/download/gonauta-linux-amd64
+curl -L -o gonauta https://github.com/yosle/gonauta/releases/latest/download/gonauta-linux-amd64
 chmod +x gonauta
 sudo mv gonauta /usr/local/bin/
 
 # O instalar paquete .deb (Debian/Ubuntu)
-wget https://github.com/USUARIO/gonauta/releases/latest/download/gonauta-X.X.X-amd64.deb
-sudo dpkg -i gonauta-X.X.X-amd64.deb
+wget https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-amd64.deb
+sudo dpkg -i gonauta-1.0.0-amd64.deb
 ```
 
 ### Desde código fuente
 
 ```bash
-git clone https://github.com/USUARIO/gonauta.git
+git clone https://github.com/yosle/gonauta.git
 cd gonauta
 go build
 ```
