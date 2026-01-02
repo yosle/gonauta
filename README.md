@@ -26,24 +26,19 @@ Descarga el binario precompilado para tu plataforma desde la [página de release
 *Opción 1: Paquetes (recomendado)*
 ```bash
 # Debian/Ubuntu (.deb)
-wget https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-amd64.deb
+wget https://github.com/yosle/gonauta/releases/download/v1.0.2/gonauta-1.0.2-amd64.deb
 sudo dpkg -i gonauta-1.0.0-amd64.deb
 
+
 # Fedora/RHEL/CentOS (.rpm)
-wget https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-x86_64.rpm
+wget https://github.com/yosle/gonauta/releases/download/v1.0.2/gonauta-1.0.2-amd64.rpm
 sudo rpm -i gonauta-1.0.0-x86_64.rpm
 
 # Alpine (.apk)
-wget https://github.com/yosle/gonauta/releases/latest/download/gonauta-1.0.0-x86_64.apk
+wget https://github.com/yosle/gonauta/releases/download/v1.0.2/gonauta-1.0.2-amd64.apk
 sudo apk add --allow-untrusted gonauta-1.0.0-x86_64.apk
 ```
 
-*Opción 2: Binario directo*
-```bash
-curl -L -o gonauta https://github.com/yosle/gonauta/releases/latest/download/gonauta-linux-amd64
-chmod +x gonauta
-sudo mv gonauta /usr/local/bin/
-```
 
 ### Desde código fuente
 
